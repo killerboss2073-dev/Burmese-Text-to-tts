@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import { createServer as createViteServer } from 'vite';
 import { MsEdgeTTS, OUTPUT_FORMAT } from 'msedge-tts';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -616,8 +615,14 @@ async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
+  app.set('trust proxy', 1);
   app.use(express.json({ limit: '300mb' }));
   app.use(express.urlencoded({ extended: true, limit: '300mb' }));
+
+  // Healthcheck endpoint for Railway / cloud platforms
+  app.get(['/api/health', '/health'], (_req: Request, res: Response) => {
+    res.json({ ok: true, status: 'healthy', uptime: Math.round(process.uptime()) });
+  });
 
   // API Route: List Voices
   app.get('/api/tts/voices', (_req: Request, res: Response) => {
@@ -875,12 +880,15 @@ async function startServer() {
   });
 
   // Serve Frontend
-  if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+  const isProd = process.env.NODE_ENV === 'production' || Boolean(process.env.RAILWAY_ENVIRONMENT);
+  if (isProd) {
+    const distPath = path.resolve(__dirname, 'dist');
+    app.use(express.static(distPath));
     app.get('*', (_req: Request, res: Response) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.join(distPath, 'index.html'));
     });
   } else {
+    const { createServer: createViteServer } = await import('vite');
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',
@@ -888,9 +896,14 @@ async function startServer() {
     app.use(vite.middlewares);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`ATM Movie & Edge TTS server running on http://0.0.0.0:${PORT}`);
+  const httpServer = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`ATM Movie & Edge TTS server running on http://0.0.0.0:${PORT} (mode=${isProd ? 'production' : 'development'})`);
   });
+
+  // Railway / reverse-proxy safe keep-alive and long TTS timeouts
+  httpServer.keepAliveTimeout = 65000;
+  httpServer.headersTimeout = 66000;
+  httpServer.requestTimeout = 300000;
 }
 
 startServer();
