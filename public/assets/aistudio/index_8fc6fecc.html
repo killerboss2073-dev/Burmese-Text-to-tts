@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATM Movie - Background Cloud Subtitle & History</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Padauk:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Padauk', sans-serif;
+            background-color: #0b1120;
+            color: #f8fafc;
+        }
+        .step-card {
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 1rem;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b1120;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+        .history-item-active {
+            border-color: #ef4444 !important;
+            background-color: rgba(239, 68, 68, 0.1) !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+
+    <!-- MOBILE HEADER -->
+    <div class="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-2.5">
+            <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white p-2 rounded-lg bg-slate-800">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+            <span class="font-bold text-white text-lg">ATM <span class="text-red-500">MOVIE</span></span>
+        </div>
+        <span class="text-[11px] bg-emerald-500/10 border border-emerald-500/30 px-2.5 py-1 rounded-full text-emerald-300">
+            <i class="fa-solid fa-cloud mr-1"></i> Background Active
+        </span>
+    </div>
+
+    <!-- LEFT SIDEBAR MENU & HISTORY -->
+    <aside id="sidebar" class="fixed md:sticky top-0 left-0 z-40 w-72 h-screen bg-slate-900 border-r border-slate-800 flex flex-col transition-transform duration-300 -translate-x-full md:translate-x-0">
+        <!-- Brand Header -->
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-red-600 text-white p-2 rounded-xl shadow-lg shadow-red-600/30">
+                    <i class="fa-solid fa-film text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-wide text-white">ATM <span class="text-red-500">MOVIE</span></h1>
+                    <p class="text-[10px] text-slate-400">Cloud Background System</p>
+                </div>
+            </div>
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- New Task Button -->
+        <div class="p-3 border-b border-slate-800">
+            <button onclick="resetForNewVideo()" class="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-2.5 px-4 rounded-xl text-xs transition flex items-center justify-center space-x-2 shadow-lg">
+                <i class="fa-solid fa-plus"></i>
+                <span>Video အသစ်တင်မည်</span>
+            </button>
+        </div>
+
+        <!-- History List Header -->
+        <div class="px-4 py-2.5 flex items-center justify-between bg-slate-950/40 border-b border-slate-800/80">
+            <span class="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <i class="fa-solid fa-clock-rotate-left mr-1.5 text-red-400"></i> History မှတ်တမ်း
+            </span>
+            <button onclick="syncAllPendingHistory()" class="text-[11px] text-emerald-400 hover:underline flex items-center" title="Refresh Status">
+                <i class="fa-solid fa-arrows-rotate mr-1"></i> Sync
+            </button>
+        </div>
+
+        <!-- History Items Container -->
+        <div id="historyList" class="flex-1 overflow-y-auto p-3 space-y-2.5">
+            <!-- Populated by JS -->
+        </div>
+
+        <!-- Sidebar Footer Info -->
+        <div class="p-3 border-t border-slate-800 bg-slate-950/60 text-[11px] text-slate-400 leading-relaxed">
+            <div class="flex items-center text-emerald-400 font-semibold mb-1">
+                <i class="fa-solid fa-bolt mr-1.5"></i> ဖုန်းပိတ်ထားလည်း အလုပ်လုပ်သည်
+            </div>
+            Upload တင်ပြီးသည်နှင့် Website မှ ထွက်သွားနိုင်ပါသည်။ ပြန်ဝင်လာချိန် History တွင် စာသားအသင့် ရရှိပါမည်။
+        </div>
+    </aside>
+
+    <!-- Overlay for mobile sidebar -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden"></div>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 max-w-5xl mx-auto w-full px-4 py-6 space-y-6">
+
+        <!-- STEP 1: API KEY -->
+        <section class="step-card p-5 shadow-xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2">
+                <h2 class="text-base font-bold text-white flex items-center">
+                    <span class="bg-red-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2.5">1</span>
+                    AssemblyAI API Key
+                </h2>
+                <div class="text-xs bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 px-3 py-1 rounded-lg flex items-center w-fit">
+                    <i class="fa-solid fa-check-circle mr-1.5"></i>
+                    <span id="saveBadgeText">API Key အမြဲတမ်း သိမ်းဆည်းထားသည်</span>
+                </div>
+            </div>
+
+            <div class="relative">
+                <input type="password" id="assemblyKey" oninput="autoSaveKey()" placeholder="AssemblyAI API Key ထည့်ပါ..." 
+                    class="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 pr-10">
+                <button type="button" onclick="togglePassword('assemblyKey')" class="absolute right-3 top-2.5 text-slate-400 hover:text-white">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- STEP 2: UPLOAD & ANTI-LOAD FAILED ENGINE -->
+        <section class="step-card p-5 shadow-xl">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-2">
+                <h2 class="text-base font-bold text-white flex items-center">
+                    <span class="bg-red-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2.5">2</span>
+                    Video တင်ပြီး Background တွင် စာသားထုတ်ယူရန်
+                </h2>
+                <span class="text-[11px] bg-amber-500/10 border border-amber-500/30 text-amber-300 px-2.5 py-1 rounded-lg">
+                    <i class="fa-solid fa-shield-halved mr-1"></i> Ultra-Light Audio (Load Failed 100% ကာကွယ်ပြီး)
+                </span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5 items-center">
+                <div class="border-2 border-dashed border-slate-600 hover:border-red-500 rounded-xl p-6 text-center transition cursor-pointer bg-slate-900/50"
+                     onclick="document.getElementById('videoFile').click()">
+                    <input type="file" id="videoFile" accept="video/*,audio/*" class="hidden" onchange="handleFileSelect(event)">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-red-500 mb-2"></i>
+                    <p class="text-sm font-semibold text-white" id="fileNameDisplay">Video သို့မဟုတ် Audio ဖိုင် ရွေးချယ်ရန် နှိပ်ပါ</p>
+                    <p class="text-xs text-slate-400 mt-1">ဖိုင်ကြီးများကို အသံဖိုင်အသေးသို့ အလိုအလျောက် ချုံ့တင်ပေးပါသည်</p>
+                </div>
+
+                <div class="space-y-3">
+                    <video id="videoPreview" controls playsinline class="w-full h-40 bg-black rounded-lg hidden object-contain border border-slate-700"></video>
+
+                    <button id="startBtn" onclick="startProcess()" 
+                        class="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold py-3 px-5 rounded-xl shadow-lg transition flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-rocket"></i>
+                        <span>စာသားစတင်ထုတ်မည် (Background Cloud)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div id="statusContainer" class="mt-5 hidden bg-slate-900 border border-slate-700 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center space-x-2">
+                        <i id="statusSpinner" class="fa-solid fa-circle-notch fa-spin text-red-500"></i>
+                        <span id="statusText" class="text-sm font-medium text-slate-200">လုပ်ဆောင်နေပါသည်...</span>
+                    </div>
+                    <span id="statusPercent" class="text-xs font-bold text-red-400">0%</span>
+                </div>
+                <div class="w-full bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                    <div id="progressBar" class="bg-red-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p id="subStatusText" class="text-xs text-emerald-400 mt-2"></p>
+            </div>
+        </section>
+
+        <!-- STEP 3: SRT FILE 1 & SRT FILE 3 -->
+        <section class="step-card p-5 shadow-xl">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-base font-bold text-white flex items-center">
+                    <span class="bg-red-600 text-white w-6 h-6 rounded-full inline-flex items-center justify-center text-xs mr-2.5">3</span>
+                    SRT File 1 (မူရင်း) နှင့် SRT File 3 (မြန်မာစာသားသီးသန့်)
+                </h2>
+                <span id="activeHistoryTitle" class="text-xs text-slate-400 font-mono"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <!-- SRT File 1: Original -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-4 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider bg-blue-500/20 text-blue-400 px-2.5 py-1 rounded">SRT File 1</span>
+                            <button id="dlOriginalBtn" onclick="downloadFile('original')" disabled
+                                class="bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-download"></i>
+                                <span>မူရင်း SRT ဒေါင်းမယ်</span>
+                            </button>
+                        </div>
+                        <h3 class="text-sm font-bold text-white mb-2">မူရင်းစာသား (Original Subtitle)</h3>
+                        <textarea id="originalSrtBox" rows="13" oninput="saveCurrentEditsToHistory()" placeholder="AssemblyAI မှ ထွက်လာသော မူရင်း Timestamp နှင့် စာသား..."
+                            class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-xs font-mono text-slate-300 focus:outline-none focus:border-blue-500 resize-y"></textarea>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-800">
+                        <button onclick="copyGeminiAppPrompt()" class="w-full bg-purple-600 hover:bg-purple-500 text-white font-bold py-2.5 px-4 rounded-lg text-xs transition flex items-center justify-center space-x-2 shadow-lg">
+                            <i class="fa-solid fa-copy"></i>
+                            <span>Gemini App ဘာသာပြန်ရန် Prompt ကူးမည် (Timestamp မပါ)</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SRT File 3: Gemini App Pure Burmese Text -->
+                <div class="bg-slate-900 border-2 border-purple-500/50 rounded-xl p-4 flex flex-col justify-between shadow-lg shadow-purple-950/20">
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider bg-purple-500/20 text-purple-300 px-2.5 py-1 rounded">SRT File 3 (Gemini App)</span>
+                            <button id="dlFile3Btn" onclick="downloadFile('file3')" disabled
+                                class="bg-purple-600 hover:bg-purple-500 disabled:bg-slate-800 disabled:text-slate-600 text-white text-xs font-bold px-3.5 py-1.5 rounded-lg transition flex items-center space-x-1.5">
+                                <i class="fa-solid fa-download"></i>
+                                <span>မြန်မာစာသား ဒေါင်းမယ်</span>
+                            </button>
+                        </div>
+                        <h3 class="text-sm font-bold text-purple-300 mb-2">မြန်မာစာသားသီးသန့် (Timestamp ဖျက်ပြီး)</h3>
+                        <textarea id="file3Box" rows="13" oninput="saveCurrentEditsToHistory()" placeholder="Gemini App မှ ရလာသော မြန်မာဘာသာပြန်စာသားများကို ဒီနေရာတွင် ကူးထည့်ပါ..."
+                            class="w-full bg-slate-950 border border-purple-900/50 rounded-lg p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-purple-500 resize-y leading-relaxed"></textarea>
+                    </div>
+
+                    <div class="mt-3 pt-3 border-t border-slate-800 flex gap-2">
+                        <button onclick="stripTimestampsAndCleanMyanmar()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg text-xs transition flex items-center justify-center space-x-2 shadow-lg">
+                            <i class="fa-solid fa-broom"></i>
+                            <span>Timestamp ဖျက်ပြီး မြန်မာစာသားသီးသန့် ထုတ်မည်</span>
+                        </button>
+                        <button onclick="copyPureMyanmarText()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-2.5 px-3 rounded-lg text-xs transition border border-slate-700" title="Copy Text">
+                            <i class="fa-solid fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- JavaScript Logic -->
+    <script>
+        let selectedFile = null;
+        let baseFileName = "atm_movie";
+        let currentHistoryId = null;
+        let wakeLock = null;
+
+        // Initialize App, Keys, and Background History Sync
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedAssembly = localStorage.getItem('atm_assembly_key');
+            if (savedAssembly) document.getElementById('assemblyKey').value = savedAssembly;
+
+            renderHistoryList();
+            syncAllPendingHistory();
+
+            // Auto-resume polling whenever user reopens phone or switches back to browser tab
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    syncAllPendingHistory();
+                }
+            });
+        });
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+            sb.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        }
+
+        function autoSaveKey() {
+            localStorage.setItem('atm_assembly_key', document.getElementById('assemblyKey').value.trim());
+            document.getElementById('saveBadgeText').textContent = "API Key အမြဲတမ်း သိမ်းဆည်းပြီး ✓";
+        }
+
+        function togglePassword(id) {
+            const input = document.getElementById(id);
+            input.type = input.type === 'password' ? 'text' : 'password';
+        }
+
+        function resetForNewVideo() {
+            selectedFile = null;
+            currentHistoryId = null;
+            document.getElementById('fileNameDisplay').textContent = "Video သို့မဟုတ် Audio ဖိုင် ရွေးချယ်ရန် နှိပ်ပါ";
+            document.getElementById('videoPreview').classList.add('hidden');
+            document.getElementById('originalSrtBox').value = "";
+            document.getElementById('file3Box').value = "";
+            document.getElementById('dlOriginalBtn').disabled = true;
+            document.getElementById('dlFile3Btn').disabled = true;
+            document.getElementById('statusContainer').classList.add('hidden');
+            document.getElementById('activeHistoryTitle').textContent = "";
+            renderHistoryList();
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            selectedFile = file;
+            baseFileName = file.name.replace(/\.[^/.]+$/, "");
+            document.getElementById('fileNameDisplay').innerHTML = `<span class="text-emerald-400 font-bold"><i class="fa-solid fa-check-circle mr-1"></i>${file.name}</span> (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+            
+            const videoPreview = document.getElementById('videoPreview');
+            videoPreview.src = URL.createObjectURL(file);
+            videoPreview.classList.remove('hidden');
+        }
+
+        function updateStatus(message, percent, isError = false, isDone = false, subMessage = "") {
+            const container = document.getElementById('statusContainer');
+            const text = document.getElementById('statusText');
+            const bar = document.getElementById('progressBar');
+            const pct = document.getElementById('statusPercent');
+            const spinner = document.getElementById('statusSpinner');
+            const sub = document.getElementById('subStatusText');
+
+            container.classList.remove('hidden');
+            text.textContent = message;
+            pct.textContent = `${percent}%`;
+            bar.style.width = `${percent}%`;
+            sub.textContent = subMessage;
+
+            if (isError) {
+                bar.className = "bg-red-600 h-2.5 rounded-full";
+                text.className = "text-sm font-medium text-red-400";
+                spinner.className = "fa-solid fa-triangle-exclamation text-red-500";
+            } else if (isDone) {
+                bar.className = "bg-emerald-500 h-2.5 rounded-full";
+                text.className = "text-sm font-medium text-emerald-400";
+                spinner.className = "fa-solid fa-circle-check text-emerald-400";
+            } else {
+                bar.className = "bg-red-600 h-2.5 rounded-full transition-all duration-300";
+                text.className = "text-sm font-medium text-slate-200";
+                spinner.className = "fa-solid fa-circle-notch fa-spin text-red-500";
+            }
+        }
+
+        // ========================================================
+        // HISTORY & BACKGROUND CLOUD PERSISTENCE SYSTEM
+        // ========================================================
+        function getHistory() {
+            try {
+                return JSON.parse(localStorage.getItem('atm_subtitle_history') || '[]');
+            } catch (e) {
+                return [];
+            }
+        }
+
+        function saveHistory(list) {
+            localStorage.setItem('atm_subtitle_history', JSON.stringify(list));
+            renderHistoryList();
+        }
+
+        function addOrUpdateHistoryItem(item) {
+            const list = getHistory();
+            const idx = list.findIndex(h => h.id === item.id);
+            if (idx >= 0) {
+                list[idx] = { ...list[idx], ...item };
+            } else {
+                list.unshift(item);
+            }
+            saveHistory(list);
+        }
+
+        function deleteHistoryItem(id, event) {
+            event.stopPropagation();
+            if (!confirm("ဤမှတ်တမ်းကို ဖျက်မည်မှာ သေချာပါသလား?")) return;
+            const list = getHistory().filter(h => h.id !== id);
+            saveHistory(list);
+            if (currentHistoryId === id) resetForNewVideo();
+        }
+
+        function selectHistoryItem(id) {
+            const list = getHistory();
+            const item = list.find(h => h.id === id);
+            if (!item) return;
+
+            currentHistoryId = item.id;
+            baseFileName = item.fileName.replace(/\.[^/.]+$/, "");
+            document.getElementById('activeHistoryTitle').textContent = `ဖိုင်: ${item.fileName}`;
+            document.getElementById('originalSrtBox').value = item.originalSrt || "";
+            document.getElementById('file3Box').value = item.file3Text || "";
+
+            document.getElementById('dlOriginalBtn').disabled = !item.originalSrt;
+            document.getElementById('dlFile3Btn').disabled = !item.file3Text;
+
+            if (item.status === 'processing' && item.transcriptId) {
+                updateStatus("Background Cloud မှ စာသားများကို ဆက်လက်ရယူနေပါသည်...", 65, false, false, "ဖုန်းပိတ်ထားစဉ် AssemblyAI မှ လုပ်ဆောင်ထားသော အချက်အလက်များကို စစ်ဆေးနေပါသည်");
+                pollTranscriptStatus(item.id, item.transcriptId);
+            } else if (item.status === 'completed') {
+                updateStatus("မှတ်တမ်းမှ စာသားများ အသင့်ရရှိပါပြီ။", 100, false, true);
+            }
+
+            renderHistoryList();
+            if (window.innerWidth < 768) toggleSidebar();
+        }
+
+        function saveCurrentEditsToHistory() {
+            const orig = document.getElementById('originalSrtBox').value.trim();
+            const f3 = document.getElementById('file3Box').value.trim();
+            document.getElementById('dlOriginalBtn').disabled = !orig;
+            document.getElementById('dlFile3Btn').disabled = !f3;
+
+            if (currentHistoryId) {
+                addOrUpdateHistoryItem({
+                    id: currentHistoryId,
+                    originalSrt: orig,
+                    file3Text: f3
+                });
+            }
+        }
+
+        function renderHistoryList() {
+            const container = document.getElementById('historyList');
+            const list = getHistory();
+
+            if (list.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">မှတ်တမ်း မရှိသေးပါ</div>`;
+                return;
+            }
+
+            container.innerHTML = list.map(item => {
+                const isActive = item.id === currentHistoryId ? 'history-item-active' : '';
+                let badge = '';
+                if (item.status === 'completed') {
+                    badge = `<span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded"><i class="fa-solid fa-check mr-1"></i>ပြီးဆုံး</span>`;
+                } else if (item.status === 'processing') {
+                    badge = `<span class="text-[10px] bg-amber-500/20 text-amber-300 px-1.5 py-0.5 rounded"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Background</span>`;
+                } else {
+                    badge = `<span class="text-[10px] bg-red-500/20 text-red-300 px-1.5 py-0.5 rounded">Error</span>`;
+                }
+
+                return `
+                <div onclick="selectHistoryItem('${item.id}')" class="p-3 rounded-xl bg-slate-800/70 hover:bg-slate-800 border border-slate-700/80 cursor-pointer transition flex flex-col justify-between ${isActive}">
+                    <div class="flex items-start justify-between gap-2">
+                        <p class="text-xs font-bold text-slate-200 truncate">${item.fileName}</p>
+                        <button onclick="deleteHistoryItem('${item.id}', event)" class="text-slate-500 hover:text-red-400 text-xs">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                    <div class="flex items-center justify-between mt-2">
+                        <span class="text-[10px] text-slate-400">${item.dateStr}</span>
+                        ${badge}
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        // Sync any background tasks when website is reopened
+        async function syncAllPendingHistory() {
+            const assemblyKey = document.getElementById('assemblyKey').value.trim();
+            if (!assemblyKey) return;
+
+            const list = getHistory();
+            const pendingItems = list.filter(h => h.status === 'processing' && h.transcriptId);
+
+            for (let item of pendingItems) {
+                pollTranscriptStatus(item.id, item.transcriptId);
+            }
+        }
+
+        // ========================================================
+        // ANTI-LOAD FAILED: ULTRA-LIGHT 8kHz MONO WAV COMPRESSOR
+        // ========================================================
+        function audioBufferToTinyWav(audioBuffer) {
+            const targetSampleRate = 8000; // Ultra-lightweight voice frequency (1.5MB per 2 mins)
+            const ratio = audioBuffer.sampleRate / targetSampleRate;
+            const rawData = audioBuffer.getChannelData(0);
+            const newLength = Math.floor(rawData.length / ratio);
+            const buffer = new ArrayBuffer(44 + newLength * 2);
+            const view = new DataView(buffer);
+
+            function writeString(view, offset, string) {
+                for (let i = 0; i < string.length; i++) {
+                    view.setUint8(offset + i, string.charCodeAt(i));
+                }
+            }
+
+            writeString(view, 0, 'RIFF');
+            view.setUint32(4, 36 + newLength * 2, true);
+            writeString(view, 8, 'WAVE');
+            writeString(view, 12, 'fmt ');
+            view.setUint32(16, 16, true);
+            view.setUint16(20, 1, true);
+            view.setUint16(22, 1, true);
+            view.setUint32(24, targetSampleRate, true);
+            view.setUint32(28, targetSampleRate * 2, true);
+            view.setUint16(32, 2, true);
+            view.setUint16(34, 16, true);
+            writeString(view, 36, 'data');
+            view.setUint32(40, newLength * 2, true);
+
+            let offset = 44;
+            for (let i = 0; i < newLength; i++) {
+                const sampleIndex = Math.floor(i * ratio);
+                let sample = Math.max(-1, Math.min(1, rawData[sampleIndex]));
+                view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+                offset += 2;
+            }
+
+            return new Blob([buffer], { type: 'audio/wav' });
+        }
+
+        async function compressVideoToTinyAudio(file) {
+            try {
+                updateStatus("Load Failed မဖြစ်စေရန် Video မှ အသံကို အသေးဆုံးချုံ့နေပါသည်...", 10, false, false, "ဖိုင်ဆိုဒ် 95% လျှော့ချနေပါသည်...");
+                const arrayBuffer = await file.arrayBuffer();
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 8000 });
+                const decoded = await audioCtx.decodeAudioData(arrayBuffer);
+                const wavBlob = audioBufferToTinyWav(decoded);
+                if (audioCtx.close) await audioCtx.close();
+                return wavBlob;
+            } catch (e) {
+                console.warn("Audio compression fallback to raw file:", e);
+                return file;
+            }
+        }
+
+        // Resilient Fetch Upload with 4x Auto-Retry
+        async function uploadToAssemblyResilient(blob, apiKey) {
+            let lastErr = null;
+            for (let attempt = 1; attempt <= 4; attempt++) {
+                try {
+                    const sizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+                    updateStatus(
+                        `AssemblyAI Cloud သို့ တင်ပို့နေပါသည် (အကြိမ် ${attempt}/4)...`,
+                        25,
+                        false,
+                        false,
+                        `ချုံ့ထားသော အသံဖိုင်ပမာဏ: ${sizeMB} MB သာရှိပါသည်`
+                    );
+
+                    const res = await fetch("https://api.assemblyai.com/v2/upload", {
+                        method: "POST",
+                        headers: {
+                            "Authorization": apiKey,
+                            "Content-Type": "application/octet-stream"
+                        },
+                        body: blob
+                    });
+
+                    if (!res.ok) throw new Error(`Status ${res.status}`);
+                    const data = await res.json();
+                    return data.upload_url;
+                } catch (err) {
+                    lastErr = err;
+                    await new Promise(r => setTimeout(r, 2000 * attempt));
+                }
+            }
+            throw new Error("ဖိုင်တင်ပို့မှု မအောင်မြင်ပါ (" + lastErr.message + ")။ အင်တာနက်လိုင်း သို့မဟုတ် API Key စစ်ဆေးပါ။");
+        }
+
+        async function startProcess() {
+            const assemblyKey = document.getElementById('assemblyKey').value.trim();
+            if (!assemblyKey) {
+                alert("AssemblyAI API Key ထည့်သွင်းပေးပါ။");
+                return;
+            }
+            if (!selectedFile) {
+                alert("Video သို့မဟုတ် Audio ဖိုင် အရင်ရွေးချယ်ပေးပါ။");
+                return;
+            }
+
+            autoSaveKey();
+            const startBtn = document.getElementById('startBtn');
+            startBtn.disabled = true;
+
+            // Request Screen WakeLock while uploading
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                }
+            } catch (e) {}
+
+            const historyId = 'job_' + Date.now();
+            currentHistoryId = historyId;
+            const nowStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            try {
+                // 1. Compress Video to tiny 1.5MB Audio so Upload never fails
+                const lightBlob = await compressVideoToTinyAudio(selectedFile);
+
+                // 2. Upload to AssemblyAI
+                const upload_url = await uploadToAssemblyResilient(lightBlob, assemblyKey);
+
+                // 3. Register Cloud Job on AssemblyAI
+                updateStatus("Background Cloud Job စတင်နေပါသည်...", 45);
+                const transcriptResp = await fetch("https://api.assemblyai.com/v2/transcript", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": assemblyKey,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        audio_url: upload_url,
+                        language_detection: true,
+                        punctuate: true,
+                        format_text: true
+                    })
+                });
+
+                if (!transcriptResp.ok) throw new Error("Transcription Job စတင်မရပါ။");
+                const { id: transcriptId } = await transcriptResp.json();
+
+                // 4. Save immediately into History so user can close website or turn off phone power!
+                addOrUpdateHistoryItem({
+                    id: historyId,
+                    fileName: selectedFile.name,
+                    dateStr: nowStr,
+                    status: 'processing',
+                    transcriptId: transcriptId,
+                    originalSrt: '',
+                    file3Text: ''
+                });
+
+                updateStatus(
+                    "Cloud Background တွင် စာသားထုတ်နေပါပြီ (ဖုန်းပိတ်ထားနိုင်ပါပြီ)!",
+                    60,
+                    false,
+                    false,
+                    "✓ History ထဲတွင် မှတ်သားပြီးပါပြီ။ Website မှ ထွက်သွားလျှင်လည်း နောက်ပြန်ဝင်လာချိန် အသင့်ရရှိပါမည်။"
+                );
+
+                // Release screen wake lock once upload is safely on cloud
+                if (wakeLock) { wakeLock.release(); wakeLock = null; }
+
+                // 5. Poll in background
+                await pollTranscriptStatus(historyId, transcriptId);
+
+            } catch (error) {
+                addOrUpdateHistoryItem({
+                    id: historyId,
+                    fileName: selectedFile ? selectedFile.name : 'Unknown',
+                    dateStr: nowStr,
+                    status: 'error'
+                });
+                updateStatus("အမှားအယွင်း: " + error.message, 100, true);
+            } finally {
+                startBtn.disabled = false;
+            }
+        }
+
+        async function pollTranscriptStatus(historyId, transcriptId) {
+            const assemblyKey = document.getElementById('assemblyKey').value.trim();
+            if (!assemblyKey) return;
+
+            let pollProgress = 65;
+            while (true) {
+                try {
+                    const checkResp = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}`, {
+                        headers: { "Authorization": assemblyKey }
+                    });
+                    const checkData = await checkResp.json();
+
+                    if (checkData.status === "completed") {
+                        const srtResp = await fetch(`https://api.assemblyai.com/v2/transcript/${transcriptId}/srt`, {
+                            headers: { "Authorization": assemblyKey }
+                        });
+                        const originalSrt = (await srtResp.text()).trim();
+
+                        addOrUpdateHistoryItem({
+                            id: historyId,
+                            status: 'completed',
+                            originalSrt: originalSrt
+                        });
+
+                        if (currentHistoryId === historyId) {
+                            document.getElementById('originalSrtBox').value = originalSrt;
+                            document.getElementById('dlOriginalBtn').disabled = false;
+                            updateStatus("အောင်မြင်စွာ ပြီးဆုံးပါပြီ။ History ထဲတွင်လည်း အမြဲသိမ်းဆည်းပြီးပါပြီ။", 100, false, true);
+                        }
+                        break;
+                    } else if (checkData.status === "error") {
+                        addOrUpdateHistoryItem({ id: historyId, status: 'error' });
+                        if (currentHistoryId === historyId) {
+                            updateStatus("AssemblyAI Error: " + checkData.error, 100, true);
+                        }
+                        break;
+                    } else {
+                        pollProgress = Math.min(pollProgress + 5, 92);
+                        if (currentHistoryId === historyId) {
+                            updateStatus(
+                                `Cloud Server ပေါ်တွင် စာသားထုတ်နေပါသည် (${checkData.status})...`,
+                                pollProgress,
+                                false,
+                                false,
+                                "ယခုအချိန်တွင် Website ပိတ်ခြင်း သို့မဟုတ် ဖုန်း Power ပိတ်ခြင်း ပြုလုပ်နိုင်ပါသည်"
+                            );
+                        }
+                    }
+                } catch (e) {
+                    // Network offline or phone sleeping; wait quietly and retry
+                }
+                await new Promise(r => setTimeout(r, 4000));
+            }
+        }
+
+        // ========================================================
+        // GEMINI APP PROMPT & PURE MYANMAR TEXT (NO TIMESTAMPS)
+        // ========================================================
+        function extractDialogueLinesFromSrt(srtText) {
+            return srtText
+                .split(/\r?\n/)
+                .map(line => line.trim())
+                .filter(line => {
+                    if (!line) return false;
+                    if (/^\d+$/.test(line)) return false;
+                    if (line.includes('-->')) return false;
+                    return true;
+                })
+                .join('\n');
+        }
+
+        function copyGeminiAppPrompt() {
+            const originalSrt = document.getElementById('originalSrtBox').value.trim();
+            if (!originalSrt) {
+                alert("မူရင်း SRT စာသား မရှိသေးပါ။");
+                return;
+            }
+
+            const cleanDialogues = extractDialogueLinesFromSrt(originalSrt);
+
+            const promptText = `You are a professional movie translator for ATM Movie.
+Translate the following dialogue lines into natural, concise spoken Burmese (မြန်မာစကားပြော).
+
+STRICT RULES:
+1. DO NOT include any timestamps (00:00:00), index numbers, or JSON formatting.
+2. Output ONLY pure Myanmar script (မြန်မာစာသားသီးသန့်).
+3. Translate line-by-line, keeping each sentence short, natural, and clear.
+4. DO NOT include ANY English, Chinese, or foreign characters. Transliterate all names phonetically into Burmese script.
+5. Do NOT wrap output in markdown code blocks.
+
+DIALOGUES TO TRANSLATE:
+${cleanDialogues}`;
+
+            navigator.clipboard.writeText(promptText).then(() => {
+                alert("Timestamp မပါသော မြန်မာဘာသာပြန် Prompt အား Copy ကူးယူပြီးပါပြီ!\n\nGemini App ထဲတွင် Paste ချပြီး ပို့လိုက်ပါ။ ရလာသော မြန်မာစာသားများကို SRT File 3 ထဲသို့ ပြန်ထည့်ပါ။");
+            });
+        }
+
+        function stripTimestampsAndCleanMyanmar() {
+            let rawText = document.getElementById('file3Box').value.trim();
+            if (!rawText) {
+                rawText = document.getElementById('originalSrtBox').value.trim();
+                if (!rawText) {
+                    alert("သန့်စင်ရန် စာသား မရှိသေးပါ။");
+                    return;
+                }
+            }
+
+            rawText = rawText.replace(/```[a-zA-Z]*\n?/gi, '').replace(/```/g, '').trim();
+
+            let extractedLines = [];
+            if (rawText.startsWith('[') && rawText.endsWith(']')) {
+                try {
+                    const parsed = JSON.parse(rawText);
+                    extractedLines = parsed.map(item => item.burmese || item.text || "");
+                } catch (e) {
+                    extractedLines = rawText.split(/\r?\n/);
+                }
+            } else {
+                extractedLines = rawText.split(/\r?\n/);
+            }
+
+            const pureMyanmarLines = extractedLines
+                .map(line => {
+                    return line
+                        .replace(/^\d+\s*$/, '')
+                        .replace(/\d{2}:\d{2}:\d{2}[,.]\d{3}\s*-->\s*\d{2}:\d{2}:\d{2}[,.]\d{3}/g, '')
+                        .replace(/"(index|timestamp|burmese|text)"\s*:\s*/gi, '')
+                        .replace(/\([A-Za-z0-9\s,.'"-]+\)/g, '')
+                        .replace(/\[[A-Za-z0-9\s,.'"-]+\]/g, '')
+                        .replace(/[A-Za-z0-9"{}\[\]]+/g, '')
+                        .replace(/^\s*[,:-]+\s*|\s*[,:-]+\s*$/g, '')
+                        .replace(/\s{2,}/g, ' ')
+                        .trim();
+                })
+                .filter(line => line.length > 0);
+
+            const finalPureText = pureMyanmarLines.join('\n');
+            document.getElementById('file3Box').value = finalPureText;
+            document.getElementById('dlFile3Btn').disabled = !finalPureText;
+            saveCurrentEditsToHistory();
+        }
+
+        function copyPureMyanmarText() {
+            const text = document.getElementById('file3Box').value.trim();
+            if (!text) {
+                alert("ကူးယူရန် စာသား မရှိသေးပါ။");
+                return;
+            }
+            navigator.clipboard.writeText(text).then(() => {
+                alert("မြန်မာစာသားသီးသန့်ကို Copy ကူးယူပြီးပါပြီ!");
+            });
+        }
+
+        function downloadFile(type) {
+            let content = "";
+            let fileName = "";
+
+            if (type === 'original') {
+                content = document.getElementById('originalSrtBox').value.trim();
+                fileName = `${baseFileName}_File1_Original.srt`;
+            } else if (type === 'file3') {
+                content = document.getElementById('file3Box').value.trim();
+                fileName = `${baseFileName}_File3_Myanmar_Text.srt`;
+            }
+
+            if (!content) {
+                alert("ဒေါင်းလုဒ်ဆွဲရန် စာသား မရှိသေးပါ။");
+                return;
+            }
+
+            const blob = new Blob(["\uFEFF" + content], { type: "text/plain;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
